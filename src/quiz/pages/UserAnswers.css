@@ -1,0 +1,20 @@
+.answer-list {
+  list-style: none;
+  margin: 1rem auto;
+  width: 90%;
+  max-width: 40rem;
+}
+
+.answer-list__content {
+  padding: 0;
+  margin-bottom: 1rem;
+}
+
+.answer-item {
+  margin: 1rem 0;
+}
+
+.answer-item__info {
+  padding: 1rem;
+  text-align: center;
+}
