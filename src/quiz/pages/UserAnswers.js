@@ -32,7 +32,7 @@ const UserAnswers = props => {
       <ul className="answer-list">
         {props.answers.map(answer => (
           <li key={answer.id} className="answer-item">
-            <select
+            {/* <select
               style={{marginRight: '1rem'}}
               onChange={e => props.onChangeSelect(e, props.user.id, answer.id)}
               value={answer.correct}
@@ -40,8 +40,13 @@ const UserAnswers = props => {
               <option value="NA"></option>
               <option value="YES">Correct</option>
               <option value="NO">Wrong</option>
-            </select>
-            {answer.number}. {answer.answer}
+            </select> */}
+            {answer.number}. {answer.answer} -{' '}
+            {answer.correct === 'YES'
+              ? 'Correct'
+              : answer.correct === 'NO'
+              ? 'wrong'
+              : ''}
           </li>
         ))}
       </ul>

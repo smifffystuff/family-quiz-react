@@ -68,7 +68,7 @@ const QuizItem = ({quiz, onDelete}) => {
       >
         <div className="quiz-container">
           <h2>{quiz.description}</h2>
-          {quiz.question_count > 0 && (
+          {quiz.question_count > 0 && quiz.creator === auth.userId && (
             <ul>
               {quiz.questions.map(q => {
                 return (
