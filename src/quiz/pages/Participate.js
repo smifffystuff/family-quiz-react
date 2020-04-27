@@ -1,10 +1,4 @@
-import React, {
-  useEffect,
-  useState,
-  useRef,
-  useContext,
-  useCallback,
-} from 'react';
+import React, {useEffect, useState, useRef, useContext} from 'react';
 import {useParams, useHistory} from 'react-router-dom';
 
 import Modal from '../../shared/components/UIElements/Modal';
@@ -13,6 +7,7 @@ import Button from '../../shared/components/FormElements/Button';
 // import LoadingSpinner from '../../shared/components/UIElements/LoadingSpinner';
 import {useHttpClient} from '../../shared/hooks/http-hook';
 import {AuthContext} from '../../shared/context/auth-context';
+import {SocketContext} from '../../shared/context/socket-context';
 
 import './Participate.css';
 
@@ -25,8 +20,10 @@ const Participate = () => {
   const [correctScore, setCorrectScore] = useState(0);
   const [wrongScore, setWrongScore] = useState(0);
   const [answered, setAnswered] = useState(0);
+  const [chatMsg, setChatMsg] = useState('');
 
   const auth = useContext(AuthContext);
+  const socket = useContext(SocketContext);
   const history = useHistory();
 
   const {isLoading, error, sendRequest, clearError} = useHttpClient();
@@ -82,6 +79,14 @@ const Participate = () => {
     };
     fetchQuiz();
   }, [sendRequest, setQuiz, quizId, setAnswers, auth.token]);
+
+  useEffect(() => {
+    socket.joinQuiz(auth.userId);
+    return () => {
+      socket.leaveQuiz();
+    };
+    //eslint-disable-next-line
+  }, []);
 
   const closeAddingAnswerHandler = () => {
     setAddingAnswer(false);
@@ -154,6 +159,17 @@ const Participate = () => {
     }
   };
 
+  const chatMsgChangeHandler = e => {
+    setChatMsg(e.target.value);
+  };
+
+  const chatMsgKeyUpHandler = e => {
+    if (e.keyCode === 13) {
+      socket.sendMessage(chatMsg);
+      setChatMsg('');
+    }
+  };
+
   return (
     <React.Fragment>
       <ErrorModal error={error} onClear={clearError} />
@@ -180,42 +196,69 @@ const Participate = () => {
       {isLoading && <p>Loading......</p>}
       {!isLoading && quiz && (
         <div className="participate">
-          <h2 className="center">{quiz.title}</h2>
-          <h3 className="center">
-            {correctScore > 0 && `${correctScore} Correct`}
-            {'   '}
-            {wrongScore > 0 && `${wrongScore} Wrong`}
-            {'   '}
-            {answered > 0 && `of ${answered} answered and checked`}
-          </h3>
-          <div className="center">
-            <Button onClick={refreshQuestionsHandler} inverse>
-              REFRESH
-            </Button>
+          <div className="participate-contents">
+            <section className="participate-contents__answers">
+              <h2 className="center">{quiz.title}</h2>
+              <h3 className="center">
+                {correctScore > 0 && `${correctScore} Correct`}
+                {'   '}
+                {wrongScore > 0 && `${wrongScore} Wrong`}
+                {'   '}
+                {answered > 0 && `of ${answered} answered and checked`}
+              </h3>
+              <div className="center">
+                <Button onClick={refreshQuestionsHandler} inverse>
+                  REFRESH
+                </Button>
+              </div>
+              <ul>
+                {answers.map(answer => (
+                  <li key={answer.number} className="participate__question">
+                    <span>
+                      {answer.correct === 'YES'
+                        ? '😀'
+                        : answer.correct === 'NO'
+                        ? '😢'
+                        : '  '}
+                      {'  '}
+                      {answer.number}. {answer.answer}
+                    </span>
+                    {!answer.answer && (
+                      <Button
+                        onClick={() => answerQuestionHandler(answer.number)}
+                        inverse
+                      >
+                        ANSWER QUESTION
+                      </Button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
+            <section className="participate-contents__chat">
+              <div>
+                <input
+                  type="text"
+                  value={chatMsg}
+                  onChange={chatMsgChangeHandler}
+                  onKeyUp={chatMsgKeyUpHandler}
+                  style={{
+                    width: '100%',
+                    borderBottom: '1rem',
+                    marginBottom: '1rem',
+                  }}
+                />
+              </div>
+              {socket.messages.map(message => (
+                <div
+                  key={message.id}
+                  className="participate-contents__chat__item"
+                >
+                  <strong>{message.user}</strong>: {message.text}
+                </div>
+              ))}
+            </section>
           </div>
-          <ul>
-            {answers.map(answer => (
-              <li key={answer.number} className="participate__question">
-                <span>
-                  {answer.correct === 'YES'
-                    ? '😀'
-                    : answer.correct === 'NO'
-                    ? '😢'
-                    : '  '}
-                  {'  '}
-                  {answer.number}. {answer.answer}
-                </span>
-                {!answer.answer && (
-                  <Button
-                    onClick={() => answerQuestionHandler(answer.number)}
-                    inverse
-                  >
-                    ANSWER QUESTION
-                  </Button>
-                )}
-              </li>
-            ))}
-          </ul>
           <div className="center">
             <Button onClick={closeQuizHandler}>CLOSE QUIZ</Button>
           </div>

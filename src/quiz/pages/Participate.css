@@ -2,8 +2,8 @@
   list-style: none;
   margin: 0 auto;
   padding: 1rem;
-  width: 90%;
-  max-width: 40rem;
+  width: 80%;
+  /* max-width: 40rem; */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.26);
   border-radius: 6px;
   background: white;
@@ -18,4 +18,24 @@
 }
 .participate__question {
   padding-bottom: 0.5rem;
+}
+
+.participate-contents {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+}
+
+.participate-contents__answers {
+  width: 65%;
+}
+
+.participate-contents__chat {
+  border: 1px solid black;
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+.participate-contents__chat__item {
+  padding: 0;
 }

@@ -6,6 +6,8 @@ import {
   Switch,
 } from 'react-router-dom';
 
+// import io from 'socket.io-client';
+
 // import Users from './user/pages/Users';
 // import NewQuiz from './quiz/pages/NewQuiz';
 // import UserQuizzes from './quiz/pages/UserQuizzes';
@@ -17,6 +19,7 @@ import {useAuth} from './shared/hooks/auth-hook';
 import LoadingSpinner from './shared/components/UIElements/LoadingSpinner';
 import Participate from './quiz/pages/Participate';
 import Answers from './quiz/pages/Answers';
+import SocketProvider from './shared/context/socket-context';
 
 const Users = React.lazy(() => import('./user/pages/Users'));
 const NewQuiz = React.lazy(() => import('./quiz/pages/NewQuiz'));
@@ -26,8 +29,36 @@ const Auth = React.lazy(() => import('./user/pages/Auth'));
 
 const App = () => {
   const {token, login, logout, userId, isAdmin} = useAuth();
+  // const [socket, setSocket] = useState();
+  // const [messages, setMessages] = useState([]);
+
+  // useEffect(() => {
+  //   setSocket(io(process.env.REACT_APP_SOCKET_URL));
+  // }, []);
 
   let routes;
+
+  // useEffect(() => {
+  //   if (socket) {
+  //     console.log('setting on message');
+  //     socket.on('message', msg => {
+  //       console.log('got a message');
+  //       setMessages(messages => [...messages, msg]);
+  //     });
+  //   }
+  // }, [socket]);
+
+  // const sendMessage = msg => {
+  //   socket.emit('test-message', 'Hello from the app', msg => {
+  //     console.log(msg);
+  //   });
+  // };
+
+  // const joinQuiz = name => {
+  //   socket.emit('join', name, msg => {
+  //     console.log(msg);
+  //   });
+  // };
 
   if (token) {
     routes = (
@@ -80,20 +111,22 @@ const App = () => {
         logout: logout,
       }}
     >
-      <Router>
-        <MainNavigation />
-        <main>
-          <Suspense
-            fallback={
-              <div className="center">
-                <LoadingSpinner />
-              </div>
-            }
-          >
-            {routes}
-          </Suspense>
-        </main>
-      </Router>
+      <SocketProvider>
+        <Router>
+          <MainNavigation />
+          <main>
+            <Suspense
+              fallback={
+                <div className="center">
+                  <LoadingSpinner />
+                </div>
+              }
+            >
+              {routes}
+            </Suspense>
+          </main>
+        </Router>
+      </SocketProvider>
     </AuthContext.Provider>
   );
 };
