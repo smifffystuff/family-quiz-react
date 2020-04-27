@@ -4,13 +4,14 @@ import {useParams, useHistory} from 'react-router-dom';
 import {
   VALIDATOR_REQUIRE,
   VALIDATOR_MINLENGTH,
+  VALIDATOR_MIN,
+  VALIDATOR_MAX,
 } from '../../shared/util/validators';
 import Input from '../../shared/components/FormElements/Input';
 import Button from '../../shared/components/FormElements/Button';
 import {useForm} from '../../shared/hooks/form-hook';
 import Card from '../../shared/components/UIElements/Card';
 import ErrorModal from '../../shared/components/UIElements/ErrorModal';
-import Modal from '../../shared/components/UIElements/Modal';
 import LoadingSpinner from '../../shared/components/UIElements/LoadingSpinner';
 import {useHttpClient} from '../../shared/hooks/http-hook';
 import {AuthContext} from '../../shared/context/auth-context';
@@ -19,8 +20,6 @@ import './QuizForm.css';
 
 const UpdateQuiz = () => {
   const [loadedQuiz, setLoadedQuiz] = useState();
-  const [addingQuestion, setAddingQuestion] = useState(false);
-  const [quizQuestions, setQuizQuestions] = useState([]);
   const {isLoading, error, sendRequest, clearError} = useHttpClient();
 
   const history = useHistory();
@@ -38,14 +37,8 @@ const UpdateQuiz = () => {
         value: '',
         isValid: false,
       },
-    },
-    true
-  );
-
-  const [quesFormState, quesInputHandler, setQuesFormData] = useForm(
-    {
-      question: {
-        value: '',
+      numberQuestions: {
+        value: 0,
         isValid: false,
       },
     },
@@ -58,14 +51,11 @@ const UpdateQuiz = () => {
         const data = await sendRequest(
           `${process.env.REACT_APP_BACKEND_URL}/quizzes/${quizId}`
         );
-        setLoadedQuiz(data.quiz);
-        setQuizQuestions(
-          data.quiz.questions.map(q => ({
-            id: q.id,
-            number: q.number,
-            question: q.question,
-          }))
-        );
+        console.log(data);
+        setLoadedQuiz({
+          ...data.quiz,
+          numberQuestions: data.quiz.number_questions,
+        });
         setFormData(
           {
             title: {
@@ -76,6 +66,10 @@ const UpdateQuiz = () => {
               value: data.quiz.description,
               isValid: true,
             },
+            numberQuestions: {
+              value: data.quiz.number_questions && 0,
+              isValid: data.quiz.number_questions ? true : false,
+            },
           },
           true
         );
@@ -84,7 +78,7 @@ const UpdateQuiz = () => {
       }
     };
     fetchQuiz();
-  }, [sendRequest, quizId, setFormData, setQuizQuestions]);
+  }, [sendRequest, quizId, setFormData]);
 
   if (isLoading && !error) {
     return (
@@ -107,100 +101,30 @@ const UpdateQuiz = () => {
   const quizUpdateSubmitHandler = async event => {
     event.preventDefault();
     try {
+      console.log(formState.inputs.numberQuestions.value);
       await sendRequest(
         `${process.env.REACT_APP_BACKEND_URL}/quizzes/${quizId}`,
         'PATCH',
         JSON.stringify({
           title: formState.inputs.title.value,
           description: formState.inputs.description.value,
+          number_questions: formState.inputs.numberQuestions.value,
         }),
         {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${auth.token}`,
         }
       );
-      await sendRequest(
-        `${process.env.REACT_APP_BACKEND_URL}/quizzes/${quizId}/questions`,
-        'POST',
-        JSON.stringify({
-          questions: quizQuestions.map(q => ({question: q.question})),
-        }),
-        {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${auth.token}`,
-        }
-      );
+
       history.push(`/${auth.userId}/quizzes`);
     } catch (err) {
       console.log(err);
     }
   };
 
-  const openAddingQuestionHandler = () => {
-    setAddingQuestion(true);
-  };
-
-  const closeAddingQuestionHandler = () => {
-    setAddingQuestion(false);
-  };
-
-  const addQuestionHandler = () => {
-    setQuizQuestions(prevQuestions => {
-      return [
-        ...prevQuestions,
-        {
-          number: prevQuestions.length + 1,
-          question: quesFormState.inputs.question.value,
-        },
-      ];
-    });
-    setQuesFormData(
-      {
-        question: {
-          value: '',
-          isValid: true,
-        },
-      },
-      false
-    );
-    setAddingQuestion(false);
-  };
-
   return (
     <React.Fragment>
       <ErrorModal error={error} onClear={clearError} />
-      <Modal
-        show={addingQuestion}
-        onCancel={closeAddingQuestionHandler}
-        header="New Question"
-        // contentClass="quiz-item__modal-content"
-        // footerClass="quiz-item__modal-action"
-        footer={
-          <React.Fragment>
-            <Button
-              onClick={addQuestionHandler}
-              disabled={!quesFormState.isValid}
-            >
-              ADD
-            </Button>
-            <Button onClick={closeAddingQuestionHandler}>CLOSE</Button>
-          </React.Fragment>
-        }
-      >
-        <div>
-          <Input
-            id="question"
-            element="input"
-            type="text"
-            label="Question"
-            validators={[VALIDATOR_REQUIRE()]}
-            errorText="Please enter a valid question"
-            onInput={quesInputHandler}
-            initialValue=""
-            initialValid={false}
-          />
-        </div>
-      </Modal>
       {!isLoading && loadedQuiz && (
         <form className="quiz-form" onSubmit={quizUpdateSubmitHandler}>
           <Input
@@ -224,22 +148,24 @@ const UpdateQuiz = () => {
             initialValue={loadedQuiz.description}
             initialValid={true}
           />
-          {quizQuestions.length > 0 && (
-            <ul>
-              {quizQuestions.map(q => {
-                return (
-                  <li key={q.number}>
-                    {q.number} - {q.question}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+          <Input
+            id="numberQuestions"
+            element="input"
+            type="number"
+            label="Number of questions"
+            validators={[
+              VALIDATOR_REQUIRE(),
+              VALIDATOR_MIN(5),
+              VALIDATOR_MAX(100),
+            ]}
+            errorText="Number of questions must be between 5 and 100"
+            onInput={inputHandler}
+            initialValue={loadedQuiz.numberQuestions}
+            initialValid={true}
+          />
+
           <Button type="submit" disabled={!formState.isValid}>
             UPDATE QUIZ
-          </Button>
-          <Button type="button" onClick={openAddingQuestionHandler}>
-            ADD QUESTION
           </Button>
         </form>
       )}

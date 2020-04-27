@@ -18,6 +18,7 @@ import './Participate.css';
 
 const Participate = () => {
   const [quiz, setQuiz] = useState();
+  const [numberRequiredAnswers, setNumberRequiredAnswers] = useState(5);
   const [answers, setAnswers] = useState([]);
   const [addingAnswer, setAddingAnswer] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState();
@@ -46,15 +47,18 @@ const Participate = () => {
 
   useEffect(() => {
     const fetchQuiz = async () => {
-      const startingAnswers = [];
-      for (let i = 1; i <= 20; i++) {
-        startingAnswers.push({number: i, answer: ''});
-      }
       try {
         const data = await sendRequest(
           `${process.env.REACT_APP_BACKEND_URL}/quizzes/${quizId}`
         );
         setQuiz(data.quiz);
+        setNumberRequiredAnswers(data.quiz.number_questions);
+        const answersRequired = data.quiz.number_questions;
+        const startingAnswers = [];
+        for (let i = 1; i <= answersRequired; i++) {
+          startingAnswers.push({number: i, answer: ''});
+        }
+
         const currentAnswers = await sendRequest(
           `${process.env.REACT_APP_BACKEND_URL}/answers/${quizId}`,
           'GET',
@@ -120,7 +124,7 @@ const Participate = () => {
 
   const refreshQuestionsHandler = async () => {
     const startingAnswers = [];
-    for (let i = 1; i <= 20; i++) {
+    for (let i = 1; i <= numberRequiredAnswers; i++) {
       startingAnswers.push({number: i, answer: ''});
     }
     try {

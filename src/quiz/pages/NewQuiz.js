@@ -4,6 +4,8 @@ import {useHistory} from 'react-router-dom';
 import {
   VALIDATOR_REQUIRE,
   VALIDATOR_MINLENGTH,
+  VALIDATOR_MAX,
+  VALIDATOR_MIN,
 } from '../../shared/util/validators';
 import Input from '../../shared/components/FormElements/Input';
 import Button from '../../shared/components/FormElements/Button';
@@ -29,6 +31,10 @@ const NewQuiz = () => {
         value: '',
         isValid: false,
       },
+      numberQuestions: {
+        value: 5,
+        isValid: true,
+      },
     },
     false
   );
@@ -42,6 +48,7 @@ const NewQuiz = () => {
         JSON.stringify({
           title: formState.inputs.title.value,
           description: formState.inputs.description.value,
+          number_questions: formState.inputs.numberQuestions.value,
         }),
         {
           'Content-Type': 'application/json',
@@ -77,12 +84,16 @@ const NewQuiz = () => {
           onInput={inputHandler}
         />
         <Input
-          id="meetingId"
+          id="numberQuestions"
           element="input"
-          type="text"
-          label="Zoom Meeting Id"
-          validators={[VALIDATOR_REQUIRE()]}
-          errorText="Please enter a valid url"
+          type="number"
+          label="Number of questions"
+          validators={[
+            VALIDATOR_REQUIRE(),
+            VALIDATOR_MIN(5),
+            VALIDATOR_MAX(100),
+          ]}
+          errorText="Number of questions must be between 5 and 100"
           onInput={inputHandler}
         />
         <Button type="submit" disabled={!formState.isValid}>
