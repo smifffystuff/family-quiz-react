@@ -5,7 +5,6 @@ export const sendMessage = msg => {
 };
 
 export const joinQuiz = userId => {
-  console.log('emitting join');
   socket.emit('join', userId);
 };
 

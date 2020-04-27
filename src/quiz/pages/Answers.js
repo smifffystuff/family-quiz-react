@@ -9,6 +9,8 @@ import UserAnswers from './UserAnswers';
 import Card from '../../shared/components/UIElements/Card';
 import Button from '../../shared/components/FormElements/Button';
 
+import './Answers.css';
+
 const Answers = () => {
   const {isLoading, error, sendRequest, clearError} = useHttpClient();
   const [answers, setAnswers] = useState();
